@@ -70,7 +70,7 @@ class ProjectAPI(APIBase):
         for key in data.keys():
             if key in self.reserved_keys:
                 if key == 'published':
-                    raise Forbidden('You cannot publish a project via the API')
+                    continue
                 raise BadRequest("Reserved keys in payload")
 
     def _select_attributes(self, data):
