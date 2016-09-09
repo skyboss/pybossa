@@ -58,6 +58,7 @@ def delete_materialized_views():
 def rebuild_db():
     """Rebuild the DB."""
     delete_materialized_views()
+    db.reflect()
     db.drop_all()
     db.create_all()
 

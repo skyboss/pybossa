@@ -73,7 +73,7 @@ class Project(db.Model, DomainObject):
     task_runs = relationship(TaskRun, backref='project',
                              cascade='all, delete-orphan',
                              order_by='TaskRun.finish_time.desc()')
-    category = relationship(Category)
+    category = relationship(Category, backref='projects')
     blogposts = relationship(Blogpost, cascade='all, delete-orphan', backref='project')
 
     def needs_password(self):
