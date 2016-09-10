@@ -76,7 +76,15 @@ class TestModelSubmission(Test):
             fullname=u"John Doe",
             locale=u"en"
         )
+        mldeveloper = User(
+            email_addr=u"mldev@example.com",
+            name=u"mldev",
+            fullname=u"ML Developer",
+            locale=u"en"
+        )
+
         db.session.add(user)
+        db.session.add(mldeveloper)
         db.session.commit()
         user = db.session.query(User).first()
 
@@ -94,62 +102,71 @@ class TestModelSubmission(Test):
         model_revision = u'revision'
         predictions = [1.0, -1.0]
 
-        s1 = Submission(author_id=user.id,
+        # Test for not null and foreign key constraints on project_id
+        for value in (None, 12345):
+            db.session.add(Submission(author_id=user.id,
+                                      project_id=value,
+                                      model_tag=model_tag,
+                                      model_revision=model_revision,
+                                      predictions=predictions))
+            assert_raises(IntegrityError, db.session.commit)
+            db.session.rollback()
+
+        # Test for not null and foreign key constraints on author_id
+        for value in (None, 12345):
+            db.session.add(Submission(author_id=value,
+                                      project_id=project.id,
+                                      model_tag=model_tag,
+                                      model_revision=model_revision,
+                                      predictions=predictions))
+            assert_raises(IntegrityError, db.session.commit)
+            db.session.rollback()
+
+        # Test for not null constraint on model_tag
+        db.session.add(Submission(author_id=user.id,
+                                  project_id=project.id,
+                                  model_tag=None,
+                                  model_revision=model_revision,
+                                  predictions=predictions))
+        assert_raises(IntegrityError, db.session.commit)
+        db.session.rollback()
+
+        # Test for not null constraint on model_revision
+        db.session.add(Submission(author_id=user.id,
+                                  project_id=project.id,
+                                  model_tag=model_tag,
+                                  model_revision=None,
+                                  predictions=predictions))
+        assert_raises(IntegrityError, db.session.commit)
+        db.session.rollback()
+
+        # Test for not null constraint on predictions
+        db.session.add(Submission(author_id=user.id,
+                                  project_id=project.id,
+                                  model_tag=model_tag,
+                                  model_revision=model_revision,
+                                  predictions=None))
+        assert_raises(IntegrityError, db.session.commit)
+        db.session.rollback()
+
+        # Test for unique constraint on (author_id, project_id, model_tag, model_revision)
+        s1 = Submission(author_id=mldeveloper.id,
                         project_id=project.id,
                         model_tag=model_tag,
                         model_revision=model_revision,
-                        predictions=predictions)
-
-        for value in (None, 12345):
-            s1.author_id = value
-            db.session.add(s1)
-            assert_raises(IntegrityError, db.session.commit)
-            db.session.rollback()
-        s1.author_id = user.id
-
-        for value in (None, 12345):
-            s1.project_id = value
-            db.session.add(s1)
-            assert_raises(IntegrityError, db.session.commit)
-            db.session.rollback()
-            s1.project_id = project.id
-
-        s1.model_tag = None
+                        predictions=[1.0, -1.0])
         db.session.add(s1)
-        assert_raises(IntegrityError, db.session.commit)
-        db.session.rollback()
-        s1.model_tag = model_tag
-
-        s1.model_revision = None
-        db.session.add(s1)
-        assert_raises(IntegrityError, db.session.commit)
-        db.session.rollback()
-        s1.model_revision = model_revision
-
-        s1.predictions = None
-        db.session.add(s1)
-        assert_raises(IntegrityError, db.session.commit)
-        db.session.rollback()
-        s1.predictions = predictions
-
-        db.session.add(s1)
-        db.session.commit
-
-        s2 = Submission(author_id=user.id,
+        db.session.commit()
+        s2 = Submission(author_id=mldeveloper.id,
                         project_id=project.id,
                         model_tag=model_tag,
                         model_revision=model_revision,
                         predictions=[1.0, 1.0])
-
         db.session.add(s2)
         assert_raises(IntegrityError, db.session.commit)
         db.session.rollback()
 
-
-        s3 = Submission(author_id=user.id,
-                        project_id=project.id,
-                        model_tag=model_tag,
-                        model_revision="new revision",
-                        predictions=[1.0, 1.0])
-        db.session.add(s3)
-        db.session.commit()
+        # Test that a user with submissions can not be deleted
+        db.session.delete(mldeveloper)
+        assert_raises(IntegrityError, db.session.commit)
+        db.session.rollback()

@@ -36,13 +36,13 @@ class Submission(db.Model, DomainObject):
 
     #: Submission.ID
     id = Column(Integer, primary_key=True)
-    #: Corresponding project ID.
+    #: In this ML extension, some train/test set is represented by a pybossa project referred here
     project_id = Column(Integer, ForeignKey('project.id', ondelete='CASCADE'), nullable=False)
     #: Author of the submission
     author_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     #: UTC timestamp of the submission
     timestamp = Column(Text, default=make_timestamp)
-    #: Model tag to select submissions by the model in development they've been produced with
+    #: Model tag to select submissions by a model in development they've been produced with
     model_tag = Column(Text, nullable=False)
     #: Model revision, e.g. a commit hash that is kept for reproducibility
     model_revision = Column(Text, nullable=False)
