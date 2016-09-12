@@ -557,13 +557,10 @@ class TestGetBreadthFirst(Test):
             short_name = 'xyzuser'
         else:
             short_name = 'xyznouser'
-
+        owner = db.session.query(User).get(1)
         category = db.session.query(Category).get(1)
         project = Project(short_name=short_name, name=short_name,
-              description=short_name, category=category)
-        owner = db.session.query(User).get(1)
-
-        project.owner = owner
+              description=short_name, category=category, owner=owner)
         task = Task(project=project, state='0', info={})
         task2 = Task(project=project, state='0', info={})
         task.project = project
